@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - Parking System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --sidebar-width: 250px;
+        }
+        
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color: #2c3e50;
+            padding-top: 60px;
+            transition: all 0.3s;
+        }
+
+        .sidebar .nav-link {
+            color: #ecf0f1;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin: 5px 15px;
+            transition: all 0.3s;
+        }
+
+        .sidebar .nav-link:hover {
+            background-color: #34495e;
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            padding-top: 80px;
+        }
+
+        .top-nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: var(--sidebar-width);
+            height: 60px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
+            padding: 0 20px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .payment-card {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+        }
+
+        .payment-summary {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .credit-card-icon {
+            font-size: 2.5rem;
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="d-flex flex-column">
+            <div class="text-white text-center mb-4">
+                <h4>Parking System</h4>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard' %}" class="nav-link">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'add_vehicle' %}" class="nav-link">
+                        <i class="bi bi-plus-circle"></i> Add Vehicle
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'view_vehicles' %}" class="nav-link">
+                        <i class="bi bi-list-ul"></i> View Vehicles
+                    </a>
+                </li>
+                <li class="nav-item mt-auto">
+                    <a href="{% url 'logout' %}" class="nav-link text-danger">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Top Navigation -->
+    <div class="top-nav d-flex align-items-center justify-content-between">
+        <h5 class="m-0">Payment</h5>
+        <div class="user-profile">
+            <div class="user-avatar">
+                {{ request.user.username|make_list|first|upper }}
+            </div>
+            <div>
+                <strong>{{ request.user.username }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="payment-card">
+                        <div class="card-body p-4">
+                            <div class="text-center mb-4">
+                                <i class="bi bi-credit-card credit-card-icon"></i>
+                                <h4 class="mt-3">Payment Details</h4>
+                            </div>
+
+                            <div class="payment-summary mb-4">
+                                <h5 class="mb-3">Vehicle Information</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Owner:</strong> {{ vehicle.owner_name }}</p>
+                                        <p><strong>Vehicle Number:</strong> {{ vehicle.vehicle_number }}</p>
+                                        <p><strong>Vehicle Type:</strong> 
+                                            {% if vehicle.vehicle_type == '2W' %}Two Wheeler
+                                            {% elif vehicle.vehicle_type == '4W' %}Four Wheeler
+                                            {% elif vehicle.vehicle_type == 'HV' %}Heavy Vehicle
+                                            {% else %}Other{% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Entry Time:</strong> {{ vehicle.entry_time|date:"M d, Y H:i" }}</p>
+                                        <p><strong>Exit Time:</strong> {{ vehicle.exit_time|date:"M d, Y H:i" }}</p>
+                                        <p><strong>Total Amount:</strong> $50.00</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form method="post" class="needs-validation" novalidate>
+                                {% csrf_token %}
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="card_number" class="form-label">Card Number</label>
+                                        <input type="text" class="form-control" id="card_number" name="card_number" required minlength="19" maxlength="19" placeholder="1234 5678 9012 3456">
+                                        <div class="invalid-feedback">
+                                            Please enter a valid 16-digit card number
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="expiry" class="form-label">Expiry Date</label>
+                                        <input type="text" class="form-control" id="expiry" name="expiry" required placeholder="MM/YY">
+                                        <div class="invalid-feedback">
+                                            Please enter a valid expiry date (MM/YY)
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="cvv" class="form-label">CVV</label>
+                                        <input type="text" class="form-control" id="cvv" name="cvv" required minlength="3" maxlength="3" placeholder="123">
+                                        <div class="invalid-feedback">
+                                            Please enter a valid 3-digit CVV
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="card_name" class="form-label">Name on Card</label>
+                                        <input type="text" class="form-control" id="card_name" name="card_name" required>
+                                        <div class="invalid-feedback">
+                                            Please enter the name on your card
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-primary w-100 btn-lg">Pay ₹50.00</button>
+                                    <a href="{% url 'view_vehicles' %}" class="btn btn-outline-secondary w-100 mt-2">Cancel</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Form validation
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        event.preventDefault();
+                        
+                        // Custom validation for card number
+                        const cardNumber = document.getElementById('card_number').value.replace(/\s/g, '');
+                        if (cardNumber.length !== 16 || !/^\d+$/.test(cardNumber)) {
+                            document.getElementById('card_number').setCustomValidity('Please enter a valid 16-digit card number');
+                        } else {
+                            document.getElementById('card_number').setCustomValidity('');
+                        }
+
+                        // Custom validation for expiry date
+                        const expiry = document.getElementById('expiry').value;
+                        const expiryPattern = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
+                        if (!expiryPattern.test(expiry)) {
+                            document.getElementById('expiry').setCustomValidity('Please enter a valid expiry date (MM/YY)');
+                        } else {
+                            document.getElementById('expiry').setCustomValidity('');
+                        }
+
+                        // Custom validation for CVV
+                        const cvv = document.getElementById('cvv').value;
+                        if (cvv.length !== 3 || !/^\d+$/.test(cvv)) {
+                            document.getElementById('cvv').setCustomValidity('Please enter a valid 3-digit CVV');
+                        } else {
+                            document.getElementById('cvv').setCustomValidity('');
+                        }
+
+                        if (!form.checkValidity()) {
+                            event.stopPropagation();
+                        } else {
+                            form.submit();
+                        }
+                        
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
+
+        // Format card number with spaces
+        document.getElementById('card_number').addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\s/g, '');
+            if (value.length > 16) value = value.substr(0, 16);
+            e.target.value = value.replace(/(.{4})/g, '$1 ').trim();
+            
+            // Clear custom validity
+            this.setCustomValidity('');
+        });
+
+        // Format expiry date
+        document.getElementById('expiry').addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 4) value = value.substr(0, 4);
+            if (value.length > 2) {
+                value = value.substr(0, 2) + '/' + value.substr(2);
+            }
+            e.target.value = value;
+            
+            // Clear custom validity
+            this.setCustomValidity('');
+        });
+
+        // Format CVV
+        document.getElementById('cvv').addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 3) value = value.substr(0, 3);
+            e.target.value = value;
+            
+            // Clear custom validity
+            this.setCustomValidity('');
+        });
+    </script>
+</body>
+</html> 
